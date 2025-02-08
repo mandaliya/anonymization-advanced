@@ -10,8 +10,25 @@ import json
 st.sidebar.header("🧠 NLP Model Selection")
 selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0)
 
-# Initialize Presidio Analyzer with the selected model
-analyzer = AnalyzerEngine(nlp_engine_name=selected_model.lower())
+from presidio_analyzer.nlp_engine import NlpEngineProvider
+
+# Sidebar for NLP model selection
+st.sidebar.header("🧠 NLP Model Selection")
+selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0)
+
+# Define NLP engine configuration
+nlp_configuration = {
+    "nlp_engine_name": selected_model.lower(),
+    "models": [{"lang_code": "en", "model_name": "en_core_web_lg"}]
+}
+
+# Initialize NLP Engine
+nlp_provider = NlpEngineProvider(nlp_configuration)
+nlp_engine = nlp_provider.create_engine()
+
+# Initialize Presidio Analyzer with the selected NLP engine
+analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
+
 
 anonymizer = AnonymizerEngine()
 
