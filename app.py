@@ -1,25 +1,17 @@
 import streamlit as st
-from presidio_analyzer import AnalyzerEngine
-from presidio_analyzer.nlp_engine import NlpEngineProvider, SpacyNlpEngine, StanzaNlpEngine
+from presidio_analyzer import AnalyzerEngine, RecognizerResult
+from presidio_anonymizer import AnonymizerEngine
+from presidio_anonymizer.entities import OperatorConfig
+import json
 
-# Set browser title
-st.set_page_config(page_title="Advanced Presidio PII Anonymization", page_icon="🔒")
+# Initialize Presidio Analyzer and Anonymizer
+analyzer = AnalyzerEngine()
+anonymizer = AnonymizerEngine()
 
-# Sidebar for NLP model selection
-st.sidebar.header("🧠 NLP Model Selection")
-selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0, key="nlp_model_selector")
+st.title("🔒 Advanced Microsoft Presidio PII Anonymization")
+st.write("This app detects and anonymizes Personally Identifiable Information (PII) using Microsoft Presidio.")
 
-# Initialize NLP Engine correctly based on selection
-if selected_model == "spaCy":
-    nlp_engine = SpacyNlpEngine(models={"en": "en_core_web_lg"})  # Using large spaCy model
-elif selected_model == "Stanza":
-    nlp_engine = StanzaNlpEngine(models={"en": "en"})  # Default Stanza English model
-
-# Initialize Presidio Analyzer with the correct NLP engine
-analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
-
-# Set up UI
-st.title("🔍 PII Anonymization with Microsoft Presidio")
+# User input text
 st.subheader("✍️ Enter Your Own Text or Select an Example")
 
 # Example texts
@@ -46,7 +38,7 @@ Her legal case ID is 2023-LAW-4567 in the New York District Court."""
 }
 
 # Dropdown for selecting example texts
-selected_example = st.selectbox("📌 Select an Example Text", ["(Enter your own text)"] + list(examples.keys()), key="example_selector")
+selected_example = st.selectbox("📌 Select an Example Text", ["(Enter your own text)"] + list(examples.keys()))
 
 # Default user text (either selected example or empty for custom input)
 if selected_example == "(Enter your own text)":
@@ -54,10 +46,54 @@ if selected_example == "(Enter your own text)":
 else:
     user_text = st.text_area("Enter text to anonymize", examples[selected_example], height=150)
 
-# Analyze and Anonymize Button
-if st.button("🔍 Analyze & Anonymize"):
-    if not user_text.strip():
-        st.warning("⚠️ Please enter some text.")
+# Sidebar options
+st.sidebar.header("🔍 Detection Settings")
+selected_language = st.sidebar.selectbox("Select Language", ["en", "es", "fr"], index=0)
+confidence_threshold = st.sidebar.slider("Confidence Threshold", 0.0, 1.0, 0.5, 0.05)
+
+st.sidebar.header("✂️ Anonymization Settings")
+available_entities = ["PERSON", "EMAIL_ADDRESS", "PHONE_NUMBER", "CREDIT_CARD", "LOCATION", "DATE_TIME"]
+selected_entities = st.sidebar.multiselect("PII Entities to Detect", available_entities, default=available_entities)
+
+anonymization_methods = {
+    "mask": OperatorConfig("mask", {"masking_char": "*", "chars_to_mask": 4, "from_end": True}),
+    "redact": OperatorConfig("redact", {}),
+    "replace": OperatorConfig("replace", {"new_value": "[REDACTED]"}),
+    "hash": OperatorConfig("hash", {}),
+}
+selected_method = st.sidebar.selectbox("Choose Anonymization Method", list(anonymization_methods.keys()))
+
+if st.button("🚀 Anonymize Text"):
+    if user_text:
+        # Analyze text for PII
+        results = analyzer.analyze(
+            text=user_text, 
+            entities=selected_entities, 
+            language=selected_language, 
+            score_threshold=confidence_threshold
+        )
+
+        # Perform anonymization
+        anonymized_result = anonymizer.anonymize(
+            text=user_text, 
+            analyzer_results=results, 
+            operators={entity: anonymization_methods[selected_method] for entity in selected_entities}
+        )
+
+        # Display results
+        st.subheader("📜 Anonymized Text")
+        st.write(anonymized_result.text)
+
+        # Show extracted PII
+        st.subheader("🔎 Detected PII Entities")
+        if results:
+            pii_info = [{"Entity": res.entity_type, "Score": res.score, "Start": res.start, "End": res.end} for res in results]
+            st.json(pii_info)
+        else:
+            st.write("No PII detected.")
+
+        # Download option
+        st.download_button("⬇️ Download Anonymized Text", anonymized_result.text, file_name="anonymized_text.txt")
+
     else:
-        results = analyzer.analyze(text=user_text, entities=[], language="en")
-        st.write("📊 **Detected Entities:**", results)
+        st.warning("⚠️ Please enter some text before anonymizing.")
