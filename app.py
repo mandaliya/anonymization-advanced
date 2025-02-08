@@ -14,7 +14,8 @@ from presidio_analyzer.nlp_engine import NlpEngineProvider
 
 # Sidebar for NLP model selection
 st.sidebar.header("🧠 NLP Model Selection")
-selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0)
+selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0, key="nlp_model_selector")
+
 
 # Define NLP engine configuration
 nlp_configuration = {
