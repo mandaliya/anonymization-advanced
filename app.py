@@ -8,8 +8,8 @@ import json
 analyzer = AnalyzerEngine()
 anonymizer = AnonymizerEngine()
 
-st.title("🔒 Advanced Microsoft Presidio PII Anonymization")
-st.write("This app detects and anonymizes Personally Identifiable Information (PII) using Microsoft Presidio.")
+st.title("🔒 Advanced PII Anonymization")
+st.write("This app detects and anonymizes Personally Identifiable Information (PII)")
 
 # User input text
 st.subheader("✍️ Enter Your Own Text or Select an Example")
