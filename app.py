@@ -1,25 +1,21 @@
 import streamlit as st
 from presidio_analyzer import AnalyzerEngine
-from presidio_analyzer.nlp_engine import NlpEngineProvider
+from presidio_analyzer.nlp_engine import NlpEngineProvider, SpacyNlpEngine, StanzaNlpEngine
 
 # Set browser title
-st.set_page_config(page_title="Advanced PII Anonymization", page_icon="🔒")
+st.set_page_config(page_title="Advanced Presidio PII Anonymization", page_icon="🔒")
 
 # Sidebar for NLP model selection
 st.sidebar.header("🧠 NLP Model Selection")
 selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0, key="nlp_model_selector")
 
-# Define NLP engine configuration
-nlp_configuration = {
-    "nlp_engine_name": selected_model.lower(),
-    "models": [{"lang_code": "en", "model_name": "en_core_web_lg"}]  # Change model if needed
-}
+# Initialize NLP Engine correctly based on selection
+if selected_model == "spaCy":
+    nlp_engine = SpacyNlpEngine(models={"en": "en_core_web_lg"})  # Using large spaCy model
+elif selected_model == "Stanza":
+    nlp_engine = StanzaNlpEngine(models={"en": "en"})  # Default Stanza English model
 
-# Initialize NLP Engine
-nlp_provider = NlpEngineProvider(nlp_configuration)
-nlp_engine = nlp_provider.create_engine()
-
-# Initialize Presidio Analyzer with the selected NLP engine
+# Initialize Presidio Analyzer with the correct NLP engine
 analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
 
 # Set up UI
