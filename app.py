@@ -5,10 +5,18 @@ from presidio_anonymizer.entities import OperatorConfig
 import json
 
 # Initialize Presidio Analyzer and Anonymizer
-analyzer = AnalyzerEngine()
+
+# Sidebar for NLP model selection
+st.sidebar.header("🧠 NLP Model Selection")
+selected_model = st.sidebar.selectbox("Choose NLP Model", ["spaCy", "Stanza"], index=0)
+
+# Initialize Presidio Analyzer with the selected model
+analyzer = AnalyzerEngine(nlp_engine_name=selected_model.lower())
+
 anonymizer = AnonymizerEngine()
 
-st.title("🔒 Advanced Microsoft Presidio PII Anonymization")
+st.set_page_config(page_title="Advanced PII Anonymization", page_icon="🔒")
+st.title("🔒 Advanced PII Anonymization")
 st.write("This app detects and anonymizes Personally Identifiable Information (PII) using Microsoft Presidio.")
 
 # User input text
