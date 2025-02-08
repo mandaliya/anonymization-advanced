@@ -8,6 +8,7 @@ import json
 analyzer = AnalyzerEngine()
 anonymizer = AnonymizerEngine()
 
+st.set_page_config(page_title="Advanced PII Anonymization", page_icon="🔒")
 st.title("🔒 Advanced PII Anonymization")
 st.write("This app detects and anonymizes Personally Identifiable Information (PII)")
 
